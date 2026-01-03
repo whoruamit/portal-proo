@@ -1,1 +1,543 @@
-# portal-proovvv
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amit Premium Portal v3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --emerald: #10b981;
+            --rose: #f43f5e;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #020617;
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Particle Canvas Background */
+        #particleCanvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+        }
+
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+        }
+
+        .neon-glow:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* --- CUTE CAT ANIMATION --- */
+        .cat-box {
+            position: relative;
+            width: 100px; height: 100px;
+            margin: 0 auto 20px;
+            animation: floatCat 4s infinite ease-in-out;
+        }
+        @keyframes floatCat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+        .cat-face {
+            width: 100%; height: 80%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50% 50% 45% 45%;
+            position: relative;
+            z-index: 2;
+        }
+        .cat-ear {
+            width: 25px; height: 35px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: absolute; top: -8px;
+            border-radius: 50% 50% 10% 10%;
+        }
+        .cat-ear.left { left: 8px; transform: rotate(-30deg); }
+        .cat-ear.right { right: 8px; transform: rotate(30deg); }
+        .cat-eye {
+            width: 10px; height: 10px;
+            background: white;
+            border-radius: 50%;
+            position: absolute; top: 30px;
+            animation: blink 5s infinite;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        .cat-eye.left { left: 22px; }
+        .cat-eye.right { right: 22px; }
+        @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+        .cat-nose { width: 5px; height: 3px; background: var(--rose); border-radius: 50%; position: absolute; top: 42px; left: 38px; }
+        .cat-tail {
+            width: 40px; height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            position: absolute; bottom: 15px; right: -15px;
+            border-radius: 10px;
+            transform-origin: left;
+            animation: wag 3s infinite ease-in-out;
+        }
+        @keyframes wag { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(30deg); } }
+
+        /* Navigation Transitions */
+        .view-section { display: none; width: 100%; opacity: 0; transform: translateY(15px); transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+        .view-section.active { display: flex; flex-direction: column; opacity: 1; transform: translateY(0); }
+
+        .btn-premium {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: all 0.3s;
+            font-weight: 800;
+        }
+        .btn-premium:hover { transform: scale(1.05); filter: brightness(1.2); box-shadow: 0 0 30px rgba(99, 102, 241, 0.4); }
+
+        /* Floating UI */
+        .float-btn { position: fixed; z-index: 100; transition: all 0.3s ease; }
+        .float-btn:hover { transform: scale(1.1) translateY(-5px); }
+
+        /* SPECIFIC INPUT STYLING (Black text for functional tools) */
+        #cvMakerView input, 
+        #cvMakerView textarea,
+        #calculatorView input,
+        #pdfMakerView input,
+        #pdfMakerView textarea {
+            background: rgba(255, 255, 255, 0.9) !important;
+            color: #000000 !important;
+            font-weight: 600;
+            border: 1px solid #ddd !important;
+            border-radius: 14px !important;
+            outline: none !important;
+            transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary) !important; box-shadow: 0 0 10px rgba(99, 102, 241, 0.3) !important; }
+
+        input::placeholder, textarea::placeholder {
+            color: #888888;
+        }
+
+        .section-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .entry-row {
+            animation: slideLeft 0.3s ease-out forwards;
+        }
+        @keyframes slideLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Photo Preview Styling */
+        #cvPhotoPreview {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            margin: 0 auto;
+            display: none;
+        }
+    </style>
+</head>
+<body class="no-scrollbar">
+
+    <!-- Background Elements -->
+    <canvas id="particleCanvas"></canvas>
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none opacity-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600 blur-[150px] rounded-full"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-purple-600 blur-[150px] rounded-full"></div>
+    </div>
+
+    <!-- Floating Instagram & Bot -->
+    <a href="https://instagram.com/abyss.creep" target="_blank" class="float-btn bottom-32 right-8 w-12 h-12 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] rounded-full flex items-center justify-center border-2 border-white/20 shadow-2xl">
+        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+    </a>
+
+    <div class="float-btn bottom-12 right-8 w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center border-2 border-white/20 shadow-2xl cursor-pointer" onclick="toggleChat()">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        <div class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#020617] animate-pulse"></div>
+    </div>
+
+    <!-- Mini Chat Widget -->
+    <div id="chatWidget" class="glass hidden fixed bottom-[200px] right-[30px] w-[320px] h-[380px] z-[110] flex-col overflow-hidden">
+        <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+            <span class="font-bold text-xs text-indigo-400 uppercase tracking-widest">Assistant Amit</span>
+            <button onclick="toggleChat()">✕</button>
+        </div>
+        <div id="chatScroll" class="flex-1 p-4 overflow-y-auto flex flex-col gap-2 no-scrollbar">
+            <div class="bg-white/10 p-3 rounded-2xl text-[11px] max-w-[85%] text-white">Namaste Amit! Professional CV ya Marksheet banani ho, main help karunga.</div>
+        </div>
+        <div class="p-3 border-t border-white/10 flex gap-2">
+            <input type="text" id="chatIn" placeholder="Puchiye..." class="flex-1 text-[11px] px-4 py-2 bg-transparent border-none focus:ring-0 !text-white">
+            <button onclick="sendMsg()" class="text-indigo-400 font-bold px-2">➤</button>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <nav id="mainNav" class="fixed top-0 left-0 w-full glass z-50 px-6 py-3 hidden justify-between items-center bg-black/60">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="switchMode('home')">
+            <div class="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center font-black italic text-sm text-white">A</div>
+            <span class="font-black text-sm tracking-tighter uppercase italic text-white">Portal Pro</span>
+        </div>
+        <div class="flex gap-4 sm:gap-8 no-scrollbar overflow-x-auto">
+            <button onclick="switchMode('dashboard')" class="nav-link text-[9px] active" id="nav-dash">Hub</button>
+            <button onclick="switchMode('cvMaker')" class="nav-link text-[9px]" id="nav-cv">CV Maker</button>
+            <button onclick="switchMode('pageMerge')" class="nav-link text-[9px]" id="nav-merge">Pages</button>
+            <button onclick="switchMode('calculator')" class="nav-link text-[9px]" id="nav-calc">Report</button>
+        </div>
+    </nav>
+
+    <main class="w-full min-h-screen">
+        
+        <!-- HOME PAGE (ZEN CAT) -->
+        <div id="homeView" class="view-section active h-screen items-center justify-center text-center px-6 pt-10">
+            <div class="cat-box">
+                <div class="cat-ear left"></div><div class="cat-ear right"></div>
+                <div class="cat-face"><div class="cat-eye left"></div><div class="cat-eye right"></div><div class="cat-nose"></div></div>
+                <div class="cat-tail"></div>
+            </div>
+            
+            <div class="space-y-6 z-10">
+                <div id="clockDisplay" class="text-[10px] font-black tracking-[12px] text-slate-500 ml-[12px] opacity-50">00:00:00</div>
+                <h1 class="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight" id="greet">Swagat Hai, Amit</h1>
+                <p class="text-slate-400 text-sm md:text-base font-medium max-w-md mx-auto italic opacity-50">"Building careers and documents with precision."</p>
+                <div class="pt-6">
+                    <button onclick="switchMode('dashboard')" class="px-10 py-4 bg-white text-black rounded-full font-black text-sm hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-3 mx-auto uppercase tracking-widest">
+                        Enter Workspace <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="absolute bottom-8 text-[8px] uppercase tracking-[6px] text-slate-700 font-bold opacity-40">Private Professional Hub by Amit</div>
+        </div>
+
+        <!-- DASHBOARD (TOOL HUB) -->
+        <div id="dashboardView" class="view-section hidden mx-auto max-w-5xl px-8 py-24 space-y-12">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl font-black italic tracking-tighter uppercase text-white">Unified Hub</h2>
+                <p class="text-slate-500 font-bold uppercase tracking-[4px] text-[10px]">What are we building today?</p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div onclick="switchMode('cvMaker')" class="glass neon-glow p-8 space-y-4 cursor-pointer border-indigo-500/20">
+                    <div class="text-3xl">👔</div>
+                    <h3 class="text-sm font-black uppercase tracking-tight text-indigo-400">CV Architect</h3>
+                    <p class="text-slate-500 text-[10px] leading-relaxed">Har field ke liye professional Resume aur CV builder with Photo.</p>
+                </div>
+                <div onclick="switchMode('pageMerge')" class="glass neon-glow p-8 space-y-4 cursor-pointer">
+                    <div class="text-3xl">📑</div>
+                    <h3 class="text-sm font-black uppercase tracking-tight text-white">Doc Merge</h3>
+                    <p class="text-slate-500 text-[10px] leading-relaxed">Multiple images ko jodkar ek multi-page file banaein.</p>
+                </div>
+                <div onclick="switchMode('calculator')" class="glass neon-glow p-8 space-y-4 cursor-pointer border-emerald-500/20">
+                    <div class="text-3xl">📊</div>
+                    <h3 class="text-sm font-black uppercase tracking-tight text-emerald-400">Report Card</h3>
+                    <p class="text-slate-500 text-[10px] leading-relaxed">Detailed Marks entry aur professional PDF generator.</p>
+                </div>
+                <div onclick="switchMode('pdfMaker')" class="glass neon-glow p-8 space-y-4 cursor-pointer border-pink-500/20">
+                    <div class="text-3xl">✏️</div>
+                    <h3 class="text-sm font-black uppercase tracking-tight text-pink-400">Quick Note</h3>
+                    <p class="text-slate-500 text-[10px] leading-relaxed">Text notes ko PDF document mein instantly badlein.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-center pt-6">
+                <button onclick="switchMode('converter')" class="px-8 py-2 rounded-full border border-white/10 bg-white/5 text-[9px] font-black text-slate-500 hover:text-indigo-400 transition-all uppercase tracking-[3px]">Grade Matrix Converter</button>
+            </div>
+        </div>
+
+        <!-- CV ARCHITECT VIEW -->
+        <div id="cvMakerView" class="view-section hidden mx-auto max-w-4xl px-8 pt-24 pb-20">
+            <div class="glass p-10 space-y-10">
+                <div class="text-center">
+                    <h2 class="text-3xl font-black text-indigo-400 italic uppercase">CV Architect</h2>
+                    <p class="text-slate-400 text-[10px] mt-1 uppercase tracking-widest text-white">Create Your Professional Brand</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Photo & Basic Info Column -->
+                    <div class="md:col-span-1 space-y-6 text-center">
+                        <span class="section-label">Profile Photo</span>
+                        <div class="relative w-32 h-32 mx-auto mb-4 border-2 border-dashed border-indigo-500/50 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-white/5 overflow-hidden group">
+                            <input type="file" id="cvPhotoInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewCVPhoto(event)">
+                            <img id="cvPhotoPreview" src="#" alt="Preview" class="w-full h-full object-cover">
+                            <div id="photoPlaceholder" class="text-indigo-400 text-[10px] font-bold group-hover:scale-110 transition-transform">ADD PHOTO</div>
+                        </div>
+                        <input type="text" id="cvName" placeholder="Pura Naam" class="w-full px-5 py-3 text-xs mb-2">
+                        <input type="email" id="cvEmail" placeholder="Email" class="w-full px-5 py-3 text-xs mb-2">
+                        <input type="text" id="cvPhone" placeholder="Mobile" class="w-full px-5 py-3 text-xs mb-2">
+                        <input type="text" id="cvAddress" placeholder="Location" class="w-full px-5 py-3 text-xs mb-2">
+                        <input type="text" id="cvLinkedIn" placeholder="LinkedIn URL" class="w-full px-5 py-3 text-xs mb-2">
+                    </div>
+                    
+                    <!-- Content Column -->
+                    <div class="md:col-span-2 space-y-6">
+                        <div>
+                            <span class="section-label">Summary</span>
+                            <textarea id="cvSummary" rows="4" placeholder="Brief professional overview..." class="w-full px-5 py-3 text-xs resize-none"></textarea>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center border-b border-white/10 pb-1 mb-3">
+                                <span class="section-label !mb-0">Work Experience</span>
+                                <button onclick="addEntry('experienceEntries')" class="text-[9px] font-black text-indigo-400 hover:underline">+ ADD</button>
+                            </div>
+                            <div id="experienceEntries" class="space-y-3"></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center border-b border-white/10 pb-1 mb-3">
+                                <span class="section-label !mb-0">Key Projects</span>
+                                <button onclick="addEntry('projectEntries')" class="text-[9px] font-black text-indigo-400 hover:underline">+ ADD</button>
+                            </div>
+                            <div id="projectEntries" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Sections -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-white/10 pb-1 mb-3">
+                            <span class="section-label !mb-0">Education History</span>
+                            <button onclick="addEntry('educationEntries')" class="text-[9px] font-black text-indigo-400 hover:underline">+ ADD</button>
+                        </div>
+                        <div id="educationEntries" class="space-y-3"></div>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <span class="section-label">Technical & Soft Skills</span>
+                            <input type="text" id="cvSkills" placeholder="Skills (comma separated)" class="w-full px-5 py-3 text-xs">
+                        </div>
+                        <div>
+                            <span class="section-label">Self Declaration</span>
+                            <textarea id="cvDeclaration" rows="3" placeholder="I hereby declare that the above details are true..." class="w-full px-5 py-3 text-xs resize-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="generateProfessionalCV()" class="w-full py-5 btn-premium rounded-[30px] text-lg uppercase tracking-widest italic shadow-xl text-white">Generate Resume 📥</button>
+            </div>
+        </div>
+
+        <!-- OTHER TOOL VIEWS (RE-USED) -->
+        <div id="pageMergeView" class="view-section hidden mx-auto max-w-4xl px-8 pt-24"><div class="glass p-10"><h2 class="text-2xl font-black text-purple-400 italic text-center mb-10 uppercase tracking-widest text-white">Multi-Page Merger</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-10"><div><div class="relative border-2 border-dashed border-white/10 rounded-2xl p-12 text-center cursor-pointer hover:border-purple-500 transition-all bg-white/5"><input type="file" multiple class="absolute inset-0 opacity-0" onchange="addPages(event)"><p class="font-black text-[10px] uppercase tracking-widest text-white">Select Images</p></div><button id="mergeBtn" onclick="mergePDF()" class="hidden w-full py-4 mt-6 bg-purple-600 rounded-2xl font-black text-sm shadow-xl text-white">Merge & Save</button></div><div id="mergeGrid" class="grid grid-cols-2 gap-3 max-h-[350px] overflow-y-auto no-scrollbar p-4 bg-black/20 rounded-2xl border border-white/5"></div></div></div></div>
+        <div id="calculatorView" class="view-section hidden mx-auto max-w-3xl px-8 pt-24"><div class="glass p-10"><h2 class="text-2xl font-black text-emerald-400 italic text-center mb-8 uppercase tracking-widest text-white">Marksheet Builder</h2><div id="gradeEntries" class="space-y-3 mb-6"></div><div class="flex justify-center mb-6"><button onclick="addRow()" class="px-6 py-2 rounded-xl border border-dashed border-emerald-500/30 text-emerald-400 font-bold hover:bg-emerald-500/5 text-xs">+ Add Course</button></div><div id="gradeRes" class="hidden p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl text-center mb-8"><div id="finalPer" class="text-6xl font-black text-white">0%</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="calcGrade()" class="py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-sm text-white">Calculate</button><button id="dlRep" onclick="dlReport()" class="hidden py-4 bg-emerald-600 rounded-2xl font-black text-sm shadow-xl text-white">Download PDF</button></div></div></div>
+        <div id="converterView" class="view-section hidden mx-auto max-w-xl px-6 pt-24 text-center"><div class="glass p-10 space-y-8"><h2 class="text-xl font-black text-indigo-400 italic uppercase text-white">Grade Matrix</h2><div class="flex p-1 bg-white/5 rounded-2xl border border-white/10"><button onclick="setConv('cgpa')" id="cvc" class="flex-1 py-3 rounded-xl font-bold bg-indigo-600 text-[10px] text-white">CGPA to %</button><button onclick="setConv('per')" id="cvp" class="flex-1 py-3 rounded-xl font-bold text-slate-500 text-[10px]"> % to CGPA</button></div><input type="number" id="cvIn" placeholder="Ex: 8.5" class="w-full rounded-2xl px-6 py-4 text-4xl font-black text-center !text-black"> <div id="cvRes" class="hidden p-6 bg-indigo-500/5 rounded-2xl"><div id="cvVal" class="text-5xl font-black text-white">0%</div></div><button onclick="doConv()" class="w-full py-4 btn-premium rounded-2xl font-black text-sm uppercase text-white">Calculate Now</button></div></div>
+        <div id="pdfMakerView" class="view-section hidden mx-auto max-w-3xl px-6 pt-24"><div class="glass p-10 space-y-6"><h2 class="text-2xl font-black text-indigo-400 text-center italic uppercase tracking-widest text-white">Text Architect</h2><input type="text" id="pdfTi" placeholder="Document Title..." class="w-full rounded-2xl px-6 py-4 font-black text-sm uppercase tracking-tighter !text-black"><textarea id="pdfCo" rows="10" placeholder="Write content here Amit..." class="w-full rounded-3xl px-6 py-6 text-sm font-medium resize-none !text-black"></textarea><button onclick="genNotes()" class="w-full py-4 bg-indigo-600 rounded-2xl font-black text-sm shadow-xl text-white">Save to PDF</button></div></div>
+
+    </main>
+
+    <div id="notif" class="fixed top-12 left-1/2 -translate-x-1/2 px-8 py-3 bg-indigo-600 text-white rounded-full font-black shadow-2xl opacity-0 transition-all pointer-events-none z-[300] text-[10px] uppercase tracking-widest">Done! ✅</div>
+
+    <script>
+        const apiKey = "";
+        let mPages = [];
+        let cMode = 'cgpa';
+        let cvPhotoBase64 = null;
+
+        // --- PARTICLE SYSTEM ---
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function initParticles() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < 60; i++) particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 1.5, speedX: Math.random() * 0.4 - 0.2, speedY: Math.random() * 0.4 - 0.2, opacity: Math.random() * 0.6 });
+        }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.speedX; p.y += p.speedY;
+                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(99, 102, 241, ${p.opacity})`; ctx.fill();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        // --- CV PHOTO PREVIEW ---
+        function previewCVPhoto(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById('cvPhotoPreview');
+                output.src = reader.result;
+                output.style.display = 'block';
+                document.getElementById('photoPlaceholder').style.display = 'none';
+                cvPhotoBase64 = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        // --- CV MAKER LOGIC ---
+        function addEntry(type) {
+            const container = document.getElementById(type);
+            const d = document.createElement('div');
+            d.className = 'entry-row grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-white/5 bg-white/[0.02] rounded-2xl relative shadow-sm';
+            if(type === 'experienceEntries') {
+                d.innerHTML = `<input type="text" placeholder="Job Title" class="exp-title px-4 py-2 text-xs text-black"><input type="text" placeholder="Company" class="exp-company px-4 py-2 text-xs text-black"><input type="text" placeholder="Dates" class="exp-date px-4 py-2 text-xs text-black"><textarea placeholder="Responsibilities..." class="exp-desc md:col-span-2 px-4 py-2 text-xs h-16 resize-none text-black"></textarea>`;
+            } else if(type === 'projectEntries') {
+                d.innerHTML = `<input type="text" placeholder="Project Name" class="prj-title px-4 py-2 text-xs text-black"><input type="text" placeholder="Link" class="prj-link px-4 py-2 text-xs text-black"><textarea placeholder="Brief Description..." class="prj-desc md:col-span-2 px-4 py-2 text-xs h-16 resize-none text-black"></textarea>`;
+            } else if(type === 'educationEntries') {
+                d.innerHTML = `<input type="text" placeholder="Degree" class="edu-degree px-4 py-2 text-xs text-black"><input type="text" placeholder="Institute" class="edu-school px-4 py-2 text-xs text-black"><input type="text" placeholder="Year" class="edu-date px-4 py-2 text-xs text-black"><input type="text" placeholder="Grade" class="edu-grade px-4 py-2 text-xs text-black">`;
+            }
+            d.innerHTML += `<button onclick="this.parentElement.remove()" class="absolute -top-1 -right-1 bg-red-600 w-5 h-5 rounded-full text-[8px] text-white shadow-md">✕</button>`;
+            container.appendChild(d);
+        }
+
+        async function generateProfessionalCV() {
+            const name = document.getElementById('cvName').value;
+            if(!name) return showNotif("Naam bhariye!", true);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 45;
+
+            // Sidebar / Header Design
+            doc.setFillColor(33, 33, 33); doc.rect(0, 0, 210, 40, 'F');
+            
+            // Photo handling
+            if(cvPhotoBase64) {
+                // Add photo to the right side of header
+                doc.addImage(cvPhotoBase64, 'JPEG', 165, 5, 30, 30);
+                doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5);
+                doc.rect(165, 5, 30, 30);
+            }
+
+            doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.setFont(undefined, 'bold');
+            doc.text(name.toUpperCase(), 15, 20);
+            doc.setFontSize(9); doc.setFont(undefined, 'normal');
+            const info = `${document.getElementById('cvEmail').value} | ${document.getElementById('cvPhone').value} | ${document.getElementById('cvAddress').value}`;
+            doc.text(info, 15, 30);
+            if(document.getElementById('cvLinkedIn').value) doc.text(document.getElementById('cvLinkedIn').value, 15, 35);
+
+            doc.setTextColor(0, 0, 0);
+            const drawSection = (title, content, isList = false) => {
+                if(!content || (Array.isArray(content) && content.length === 0)) return;
+                if(y > 260) { doc.addPage(); y = 20; }
+                doc.setFontSize(13); doc.setFont(undefined, 'bold'); doc.setTextColor(99, 102, 241);
+                doc.text(title, 15, y);
+                doc.setDrawColor(200); doc.setLineWidth(0.2); doc.line(15, y+1.5, 195, y+1.5);
+                y += 10;
+                doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(40, 40, 40);
+                if(isList) {
+                    content.forEach(item => {
+                        const lines = doc.splitTextToSize("• " + item, 175);
+                        doc.text(lines, 15, y); y += (lines.length * 5) + 1;
+                    });
+                } else {
+                    const lines = doc.splitTextToSize(content, 175);
+                    doc.text(lines, 15, y); y += (lines.length * 5) + 1;
+                }
+                y += 6;
+            };
+
+            drawSection("PROFESSIONAL SUMMARY", document.getElementById('cvSummary').value);
+            
+            const expList = [];
+            document.querySelectorAll('#experienceEntries > div').forEach(r => {
+                expList.push(`${r.querySelector('.exp-title').value} @ ${r.querySelector('.exp-company').value} (${r.querySelector('.exp-date').value})\n${r.querySelector('.exp-desc').value}`);
+            });
+            drawSection("WORK EXPERIENCE", expList, true);
+
+            const prjList = [];
+            document.querySelectorAll('#projectEntries > div').forEach(r => {
+                prjList.push(`${r.querySelector('.prj-title').value} - ${r.querySelector('.prj-link').value}\n${r.querySelector('.prj-desc').value}`);
+            });
+            drawSection("PROJECTS", prjList, true);
+
+            const eduList = [];
+            document.querySelectorAll('#educationEntries > div').forEach(r => {
+                eduList.push(`${r.querySelector('.edu-degree').value} - ${r.querySelector('.edu-school').value} (${r.querySelector('.edu-date').value}) Grade: ${r.querySelector('.edu-grade').value}`);
+            });
+            drawSection("EDUCATION", eduList, true);
+
+            drawSection("SKILLS", document.getElementById('cvSkills').value);
+
+            // Final Declaration
+            const dec = document.getElementById('cvDeclaration').value;
+            if(dec) {
+                if(y > 240) { doc.addPage(); y = 20; }
+                drawSection("DECLARATION", dec);
+                y += 10;
+                doc.setFontSize(10); doc.text("Date: " + new Date().toLocaleDateString(), 15, y);
+                doc.text("Signature: ________________", 195, y, { align: "right" });
+            }
+
+            doc.save(`${name}_Professional_CV.pdf`);
+            showNotif("Professional Resume Ready! ✅");
+        }
+
+        // --- NAVIGATION & UI ---
+        function switchMode(v) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            setTimeout(() => {
+                document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+                const target = document.getElementById(v + 'View');
+                target.classList.remove('hidden'); setTimeout(() => target.classList.add('active'), 50);
+            }, 300);
+            const nav = document.getElementById('mainNav'); nav.classList.toggle('hidden', v === 'home'); nav.classList.toggle('flex', v !== 'home');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const nMap = { dashboard:'dash', calculator:'calc', pageMerge:'merge', pdfMaker:'pdf', cvMaker:'cv' };
+            const nBtn = document.getElementById('nav-' + (nMap[v] || '')); if(nBtn) nBtn.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateUI() {
+            const now = new Date(); const h = now.getHours();
+            document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('en-US', { hour12: false });
+            const gt = document.getElementById('greet');
+            if (h < 12) gt.innerText = "Suprabhat, Amit"; else if (h < 17) gt.innerText = "Shubh Dopahar, Amit"; else gt.innerText = "Shubh Sandhya, Amit";
+        }
+
+        // --- OTHER UTILS ---
+        function addPages(e) { Array.from(e.target.files).forEach(f => { const r = new FileReader(); r.onload = (ev) => { mPages.push({ data: ev.target.result }); renderMerge(); }; r.readAsDataURL(f); }); }
+        function renderMerge() { const g = document.getElementById('mergeGrid'); g.innerHTML = ''; document.getElementById('mergeBtn').classList.toggle('hidden', mPages.length === 0); mPages.forEach((p, i) => { const d = document.createElement('div'); d.className = 'glass p-2 relative group overflow-hidden'; d.innerHTML = `<img src="${p.data}" class="h-20 w-full object-cover rounded-xl"><button onclick="mPages.splice(${i},1);renderMerge()" class="absolute top-1 right-1 bg-red-600 text-white w-5 h-5 rounded-full text-[8px]">✕</button>`; g.appendChild(d); }); }
+        async function mergePDF() { const {jsPDF}=window.jspdf; const doc = new jsPDF(); for(let i=0; i<mPages.length; i++) { if(i > 0) doc.addPage(); doc.addImage(mPages[i].data, 'JPEG', 10, 10, 190, 0); } doc.save("Merged.pdf"); showNotif("Success!"); }
+        function setConv(m) { cMode = m; document.getElementById('cvc').className = m==='cgpa' ? 'flex-1 py-3 rounded-xl font-bold bg-indigo-600 text-[10px] text-white' : 'flex-1 py-3 rounded-xl font-bold text-slate-500 text-[10px]'; document.getElementById('cvp').className = m==='per' ? 'flex-1 py-3 rounded-xl font-bold bg-indigo-600 text-[10px] text-white' : 'flex-1 py-3 rounded-xl font-bold text-slate-500 text-[10px]'; document.getElementById('cvRes').classList.add('hidden'); }
+        function doConv() { const v = parseFloat(document.getElementById('cvIn').value); if(isNaN(v)) return; document.getElementById('cvVal').innerText = cMode==='cgpa'?(v*9.5).toFixed(2)+'%':(v/9.5).toFixed(2); document.getElementById('cvRes').classList.remove('hidden'); showNotif("Converted!"); }
+        function addRow() { const c = document.getElementById('gradeEntries'); const d = document.createElement('div'); d.className = 'flex gap-2'; d.innerHTML = `<input type="text" placeholder="Sub" class="flex-1 px-4 py-3 text-xs sub-n text-black"><input type="number" placeholder="Marks" class="w-20 px-2 py-3 text-xs text-center sub-o text-black"><input type="number" placeholder="Total" class="w-20 px-2 py-3 text-xs text-center sub-t text-black">`; c.appendChild(d); }
+        function calcGrade() { let o=0, t=0; document.querySelectorAll('#gradeEntries > div').forEach(r => { o += parseFloat(r.querySelector('.sub-o').value) || 0; t += parseFloat(r.querySelector('.sub-t').value) || 0; }); if(t===0) return; document.getElementById('finalPer').innerText = ((o/t)*100).toFixed(2) + '%'; document.getElementById('gradeRes').classList.remove('hidden'); document.getElementById('dlRep').classList.remove('hidden'); }
+        function dlReport() { const {jsPDF}=window.jspdf; const doc = new jsPDF(); doc.text("STUDENT REPORT", 105, 20, {align:"center"}); const b = []; document.querySelectorAll('#gradeEntries > div').forEach(r => b.push([r.querySelector('.sub-n').value||'Sub', r.querySelector('.sub-o').value||'0', r.querySelector('.sub-t').value||'0'])); doc.autoTable({startY:30, head:[['Name','Obt','Tot']], body:b}); doc.save("Report.pdf"); }
+        function genNotes() { const c = document.getElementById('pdfCo').value; if(!c) return; const {jsPDF}=window.jspdf; const d = new jsPDF(); d.text(document.getElementById('pdfTi').value||"Notes", 10, 20); d.text(d.splitTextToSize(c, 180), 10, 30); d.save("Note.pdf"); showNotif("PDF Saved!"); }
+        
+        function toggleChat() { document.getElementById('chatWidget').classList.toggle('hidden'); document.getElementById('chatWidget').classList.toggle('flex'); }
+        async function sendMsg() {
+            const i = document.getElementById('chatIn'), q = i.value.trim(); if(!q) return;
+            const s = document.getElementById('chatScroll'); const u = document.createElement('div'); u.className='user-msg bg-indigo-600 p-2 rounded-xl text-[10px] ml-auto max-w-[80%] text-white'; u.innerText=q; s.appendChild(u); i.value='';
+            const b = document.createElement('div'); b.className='bot-msg bg-white/10 p-2 rounded-xl text-[10px] max-w-[80%] text-white'; b.innerText='...'; s.appendChild(b);
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents: [{parts:[{text:q}]}], systemInstruction: {parts: [{text: "Aap Amit ke portal bot hain."}]} }) });
+                const r = await res.json(); b.innerText = r.candidates?.[0]?.content?.parts?.[0]?.text || "System Error.";
+            } catch(e) { b.innerText = "Error!"; }
+            s.scrollTop = s.scrollHeight;
+        }
+
+        function showNotif(m, isErr=false) { const n = document.getElementById('notif'); n.innerText = m; n.style.background = isErr ? '#f43f5e' : '#6366f1'; n.style.opacity = '1'; setTimeout(() => n.style.opacity = '0', 3000); }
+        window.addEventListener('resize', initParticles);
+        window.onload = () => { initParticles(); animateParticles(); updateUI(); setInterval(updateUI, 1000); addRow(); addRow(); addEntry('experienceEntries'); addEntry('educationEntries'); addEntry('projectEntries'); };
+    </script>
+</body>
+</html>
